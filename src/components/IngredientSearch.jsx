@@ -3,6 +3,8 @@ import React, { useState, useEffect } from "react"
 function IngredientSearch() {
 
     const [results, setResults] = useState([])
+    const [loading, setLoading] = useState(false)
+
     const API_KEY = import.meta.env.VITE_SPOONACULAR_KEY
 
     useEffect(() => {
@@ -10,32 +12,54 @@ function IngredientSearch() {
         const input = document.querySelector('input[name="ingredient"]')
         if (!input) return
 
-        const handleInput = async (e) => {
+        let debounceTimer
+
+        const handleInput = (e) => {
 
             const value = e.target.value
 
-            if (value.length < 2) {
-                setResults([])
-                return
-            }
+            clearTimeout(debounceTimer)
 
-            try {
+            debounceTimer = setTimeout(async () => {
 
-                const res = await fetch(
-                    `https://api.spoonacular.com/food/ingredients/search?query=${value}&number=6&apiKey=${API_KEY}`
-                )
+                if (value.length < 2) {
+                    setResults([])
+                    return
+                }
 
-                const data = await res.json()
-                setResults(data.results || [])
+                try {
 
-            } catch (err) {
-                console.error("API error:", err)
-            }
+                    setLoading(true)
+
+                    const res = await fetch(
+                        `https://api.spoonacular.com/food/ingredients/search?query=${value}&number=6&apiKey=${API_KEY}`
+                    )
+
+                    // Handle API quota error
+                    if (res.status === 402) {
+                        console.warn("API quota exceeded")
+                        setResults([])
+                        return
+                    }
+
+                    const data = await res.json()
+                    setResults(data.results || [])
+
+                } catch (err) {
+                    console.error("API error:", err)
+                } finally {
+                    setLoading(false)
+                }
+
+            }, 500) // debounce delay
+
         }
 
         input.addEventListener("input", handleInput)
 
-        return () => input.removeEventListener("input", handleInput)
+        return () => {
+            input.removeEventListener("input", handleInput)
+        }
 
     }, [API_KEY])
 
@@ -48,7 +72,9 @@ function IngredientSearch() {
     return (
         <ul className="ingredient-suggestions">
 
-            {results.map(item => (
+            {loading && <li>Searching...</li>}
+
+            {!loading && results.map(item => (
 
                 <li
                     key={item.id}
