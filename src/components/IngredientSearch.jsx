@@ -61,7 +61,7 @@ function IngredientSearch() {
                         alt={item.name}
                     />
 
-                    {item.name}
+                    <span>{item.name}</span>
 
                 </li>
 

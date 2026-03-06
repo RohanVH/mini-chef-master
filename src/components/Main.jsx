@@ -6,6 +6,7 @@ import IngredientItem from './IngredientItem'
 
 function Main() {
     const [ingredients, setIngredients] = React.useState([])
+    const [inputValue, setInputValue] = React.useState('')
     const API_KEY = import.meta.env.VITE_SPOONACULAR_KEY
 
     const ingredientsListItems = ingredients.map((ingredient, index) => (
@@ -22,8 +23,7 @@ function Main() {
     ))
     const addItems = async (e) => {
         e.preventDefault();
-        const formData = new FormData(e.target);
-        const newIngredient = formData.get("ingredient").trim();
+        const newIngredient = inputValue.trim();
         if (!newIngredient) return;
 
         try {
@@ -38,7 +38,7 @@ function Main() {
             console.error("Error fetching ingredient image:", err);
             setIngredients(prev => [...prev, { name: newIngredient, image: null }]);
         }
-        e.target.reset();
+        setInputValue('');
     }
     return (
         <main >
@@ -60,13 +60,21 @@ function Main() {
                         placeholder="e.g. oregano"
                         aria-label="Add ingredient"
                         name='ingredient'
+                        value={inputValue}
+                        onChange={(e) => setInputValue(e.target.value)}
                     />
                     <button>
                         <img src={addGif} alt="Add ingredient" id="add-icon" />
                     </button>
                 </form>
-
+                {inputValue && (
+                <div id="suggestions">
+                    <span >
+                        Suggestions:
+                    </span>
                 <IngredientSearch />
+                </div>
+                )}
                 
                 <div id='text-bar'>
                     <h3 className='item-list'><u>Ingredients You Added </u></h3>
